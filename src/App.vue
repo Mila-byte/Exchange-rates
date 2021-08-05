@@ -1,28 +1,44 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div>
+    <transition name="fade" mode="out-in">
+      <keep-alive>
+        <CurrencyConverter v-if="converter" @changePage="converter = false" />
+        <CurrentExchangeRates v-else @backToConverter="converter = true" />
+      </keep-alive>
+    </transition>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import { mapActions } from 'vuex'
 
 export default {
   name: 'App',
+  data() {
+    return {
+      converter: true
+    }
+  },
   components: {
-    HelloWorld
+    CurrencyConverter: () => import('@/views/CurrencyConverter.vue'),
+    CurrentExchangeRates: () => import('@/views/CurrentExchangeRates.vue')
+  },
+  computed: {
+    isReadyToUpdate() {
+      return (
+        new Date().toDateString() !==
+        new Date(this.$store.state.apiData?.timestamp * 1000).toDateString()
+      )
+    }
+  },
+  created() {
+    if (this.$store.state.apiData && !this.isReadyToUpdate)
+      return this.setChangedData()
+    this.getCurrencyRate()
+  },
+  methods: {
+    ...mapActions(['getCurrencyRate', 'setChangedData'])
   }
 }
 </script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
